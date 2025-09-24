@@ -26,13 +26,38 @@ Modern applications produce large volumes of heterogeneous logs. Centralized pro
 5. **Anomaly Detector Actor** monitors aggregated metrics and triggers alerts.
 6. **Alerting Actor** receives alerts and records them (could be extended to send webhooks/Slack).
 
-Mermaid diagram:
+## Files Information :-
 
-```mermaid
-flowchart LR
-  A[Log Generator] --> B[Ray Object Store]
-  B --> C[Parser Tasks\n(@ray.remote)]
-  C --> D[Aggregator Actor\n(@ray.remote(class))]
-  D --> E[Anomaly Detector Actor\n(@ray.remote(class))]
-  E --> F[Alerting Actor\n(@ray.remote(class))]
-```
+**main.py**: Orchestrator — starts Ray, sets up components, runs a demo ingestion, and shuts down Ray.
+**src/data_processing.py**: Code to generate synthetic logs and to stream/load batches.
+**src/core_logic.py**: Contains all Ray remote functions and Actors (parsers, aggregator, detector, alerting).
+**src/utils.py**: Helpers (regex-based log parser, sliding-window aggregator, typed dataclasses).
+
+## Setup & Execution
+
+**Python version**: 3.9+ (recommended 3.10 or 3.11)
+**Install dependencies**: pip install -r requirements.txt
+**Run (demo)**:python main.py
+**The demo will**:
+Start a local Ray instance.
+Generate simulated log batches.
+Parse and aggregate them in parallel.
+Detect anomalies and print/store alerts.
+
+## Files & Roles
+
+- `requirements.txt`: Python packages required to run.
+- `main.py`: Entry point; contains a `run_demo()` function demonstrating ingestion and processing.
+- `src/data_processing.py`: `LogGenerator`, `batch_logs()` and helpers for producing log lines.
+- `src/core_logic.py`: `parse_logs_remote`, `AggregatorActor`, `AnomalyDetectorActor`, `AlertingActor`.
+- `src/utils.py`: `LogLine` dataclass, parsing utilities, sliding-window logic.
+
+## Design & Ray Usage Notes
+
+---
+
+- **`ray.init()` / `ray.shutdown()`**: Proper lifecycle is handled in `main.py`.
+- **`@ray.remote` functions**: `parse_logs_remote` is stateless and scaled to many parallel workers.
+- **`@ray.remote(class)`**: `Aggregator`, `Detector`, and `Alerting` are stateful actors that maintain in-memory sliding windows and persistent aggregates.
+- **Object store**: Batches of raw log lines and parsed record lists are stored and passed as Ray object references to avoid copies. Parsers return these object references for downstream consumption.
+- **Ray Datasets**: This was not required for the demo. However, the design is compatible with Ray Datasets for scaling to a production pipeline, and extension points are commented in the code.
