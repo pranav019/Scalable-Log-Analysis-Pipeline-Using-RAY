@@ -138,3 +138,12 @@ if __name__ == "main":
         lines_per_batch=args.lines,
         parse_parallelism=args.parallel,
     )
+
+
+# Argument Parsing → Makes pipeline configurable.
+# Actors Setup → Alerting, Aggregator, Detector each have clear roles.
+# Log Generator → Provides reproducible input logs.
+# Batch Slicing → Divides workload for parallel parsing.
+# Parsing with Remote Tasks → Fast, stateless processing of logs in parallel.
+# Aggregator Actor → Collects and stores parsed results.
+# Detector Actor → Continuously scans and triggers alerts on anomalies
